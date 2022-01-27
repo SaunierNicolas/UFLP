@@ -37,9 +37,25 @@ function main()
         [3,9,7,2,5,2],
         [7,4,4,7,5,1]
     ]
-
     
-    #(x_init,y_init) = greedyContstruction(n,m,f,c)
+    j2 = 4
+    i2 = 8
+    f2 = [8,15,7,6]
+    c2 = [
+        [5,2,10,11],
+        [3,0,8,9],
+        [4,1,10,7],
+        [7,4,13,4],
+        [10,7,10,2],
+        [10,13,5,3],
+        [5,8,0,8],
+        [3,6,2,11]
+    ]
+    
+    (x_init,y_init) = greedyConstruction(i,j,f,c)
+    println("DEPOT OUVERT", y_init)
+    println("MATRICE", x_init)
+
     #Valeur arbitraire pour x et y en attendant l'implémentation de la construction gloutonne
     x_init = [
             [0,0,0,0,1,0,1,1,0,0], #1
@@ -52,7 +68,7 @@ function main()
 
     y_init = [1,0,0,1,1,0]
 
-    x_opt,y_opt = localSearch(i,j,y_init,f,c)
+   # x_opt,y_opt = localSearch(i,j,y_init,f,c)
 
     
 
