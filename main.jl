@@ -60,7 +60,24 @@ function main()
     f = [f_1,f_2]
 
     
-    #(x_init,y_init) = greedyContstruction(n,m,f,c)
+    j2 = 4
+    i2 = 8
+    f2 = [8,15,7,6]
+    c2 = [
+        [5,2,10,11],
+        [3,0,8,9],
+        [4,1,10,7],
+        [7,4,13,4],
+        [10,7,10,2],
+        [10,13,5,3],
+        [5,8,0,8],
+        [3,6,2,11]
+    ]
+    
+    (x_init,y_init) = greedyConstruction(i,j,f,c)
+    println("DEPOT OUVERT", y_init)
+    println("MATRICE", x_init)
+
     #Valeur arbitraire pour x et y en attendant l'implémentation de la construction gloutonne
     
 
