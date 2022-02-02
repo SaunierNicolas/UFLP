@@ -1,32 +1,31 @@
 
-function localSearch(i,j,x,y,f,c,l_1,l_2)
+function localSearch(i,j,x,y,f,c,l)
     
     y_new = deepcopy(y)
     x_new = deepcopy(x)
-    x_new = pairingClient(i,j,y,c,l_1,l_2)
+    x_new = pairingClient(i,j,y,c,l)
 
-    println("kp 2-1")
-    println(zValue(i,j,x_new,y_new,f[1],c[1]),zValue(i,j,x_new,y_new,f[2],c[2]),y_new)
-    change,y_new = kp_2_1(i,j,x,y_new,f,c,l_1,l_2)
+    #println("kp 2-1")
+    #println("z1 : ",zValue(i,j,x_new,y_new,f[1],c[1]),", z2 : ",zValue(i,j,x_new,y_new,f[2],c[2]),y_new," zp : ",zValue_pondere(i,j,x_new,y_new,f,c,l))
+    change,y_new = kp_2_1(i,j,x_new,y_new,f,c,l)
     while change == true
-        println(zValue(i,j,x_new,y_new,f[1],c[1]),zValue(i,j,x_new,y_new,f[2],c[2]),y_new)
-        change,y_new = kp_2_1(i,j,x,y_new,f,c,l_1,l_2)
+        #println("z1 : ",zValue(i,j,x_new,y_new,f[1],c[1]),", z2 : ",zValue(i,j,x_new,y_new,f[2],c[2]),y_new," zp : ",zValue_pondere(i,j,x_new,y_new,f,c,l))
+        change,y_new = kp_2_1(i,j,x_new,y_new,f,c,l)
     end
 
-    x_new = pairingClient(i,j,y_new,c,l_1,l_2)
+    x_new = pairingClient(i,j,y_new,c,l)
     
 
     return (x_new,y_new)
 end
 
 #détermine la meilleure affectation client-depot (depot = site ouvert)
-function pairingClient(n_client,n_site,y,c,l_1,l_2)
+function pairingClient(n_client,n_site,y,c,l)
     
     #initialisation de x 
     x = Vector{Vector{Int64}}(undef,0)
     for i = 1:n_client
         push!(x,zeros(n_site))
-        
     end
 
     #Recherche du cout minimum.
@@ -34,8 +33,8 @@ function pairingClient(n_client,n_site,y,c,l_1,l_2)
         indiceDepot_minCost = 1
         for j = 1:n_site
             if y[j] == 1
-                costMin = l_1*c[1][i][j] + l_2*c[2][i][j]
-                cost_ij = l_1*c[1][i][indiceDepot_minCost] + l_2*c[2][i][indiceDepot_minCost]
+                costMin = l*c[1][i][j] + (1-l)*c[2][i][j]
+                cost_ij = l*c[1][i][indiceDepot_minCost] + (1-l)*c[2][i][indiceDepot_minCost]
                 if cost_ij < costMin
                     indiceDepot_minCost = j
                 end
@@ -49,11 +48,11 @@ function pairingClient(n_client,n_site,y,c,l_1,l_2)
 end
 
 #Retourne si le kp 2-1 est applicable, et le vecteur y post-kp.
-function kp_2_1(i,j,x,y,f,c,l_1,l_2)
+function kp_2_1(i,j,x,y,f,c,l)
 
     kp21_feasability = false
     y_new = deepcopy(y)
-    z_init = zValue(i,j,x,y,f,c)
+    z_init = zValue_pondere(i,j,x,y,f,c,l)
  
 
     #Listes contenant les indices des site ouverts (1) ou fermées (0).
@@ -89,8 +88,8 @@ function kp_2_1(i,j,x,y,f,c,l_1,l_2)
                     #println(a,",",b,",",d," : ",y)
 
                     #évaluation de la nouvelle solution
-                    x_new = pairingClient(i,j,y_new,c,l_1,l_2)
-                    z_new = zValue_pondere(i,j,x_new,y_new,f,c,l_1,l_2)
+                    x_new = pairingClient(i,j,y_new,c,l)
+                    z_new = zValue_pondere(i,j,x_new,y_new,f,c,l)
 
                     if (z_new < z_init)
                         kp21_feasability = true
@@ -170,16 +169,12 @@ end=#
 
 
 
-
-
-
 function zValue(i,j,x,y,f,c)
     sum_y = 0
     for n = 1:j
         sum_y += y[n]*f[n]
     end
     sum_x = 0
-
     for n = 1:i
         for m = 1:j
             sum_x += x[n][m] * c[n][m]
@@ -189,6 +184,9 @@ function zValue(i,j,x,y,f,c)
     return sum_y+sum_x
 end
 
-function zValue_pondere(i,j,x,y,f,c,l_1,l_2)
-    return (zValue(i,j,x,y,f[1],c[1])*l_1) + (zValue(i,j,x,y,f[2],c[2])*l_2)
+function zValue_pondere(i,j,x,y,f,c,l)
+    z1 = zValue(i,j,x,y,f[1],c[1])*l
+    z2 = zValue(i,j,x,y,f[2],c[2])*(1-l)
+    z = z1+z2
+    return z
 end

@@ -57,30 +57,8 @@ function main()
     ]
 
     c = [c_1,c_2]
-    f = [f_1,f_2]
 
-    
-    j2 = 4
-    i2 = 8
-    f2 = [8,15,7,6]
-    c2 = [
-        [5,2,10,11],
-        [3,0,8,9],
-        [4,1,10,7],
-        [7,4,13,4],
-        [10,7,10,2],
-        [10,13,5,3],
-        [5,8,0,8],
-        [3,6,2,11]
-    ]
-    
-    (x_init,y_init) = greedyConstruction(i,j,f,c)
-    println("DEPOT OUVERT", y_init)
-    println("MATRICE", x_init)
-
-    #Valeur arbitraire pour x et y en attendant l'implémentation de la construction gloutonne
-    
-
+    #=
     x_init = [
          #y=[1,0,0,1,1,0]
             [0,0,0,1,0,0],
@@ -96,29 +74,35 @@ function main()
         ]
 
     y_init = [1,0,0,1,1,0]
-
-    x_opt_1,y_opt_1 = localSearch(i,j,x_init,y_init,f,c,1,0)
-    x_opt_2,y_opt_2 = localSearch(i,j,x_init,y_init,f,c,1,0)
-
-
-    println("y_init_1 : ",y_init)
-    println("z_init_1 : ",zValue(i,j,x_init,y_init,f,c_1))
-    println("y_opt_1 : ",y_opt_1)
-    println("z_opt_1 : ",zValue(i,j,x_opt_1,y_opt_1,f,c_1))
-
-    println("y_init_2 : ",y_init)
-    println("z_init_2 : ",zValue(i,j,x_init,y_init,f,c_2))
-    println("y_opt_2 : ",y_opt_2)
-    println("z_opt_2 : ",zValue(i,j,x_opt_2,y_opt_2,f,c_2))
-
-
-    #x = 1:10; y = [rand(10),rand(10)];
-    #scatter(x, y)
-
-for i = 1:10
-    println(rand(6))
-end
+=#
+    plot_twist(10,i,j,f,c)
 
 end
+
+#En écrivant le nom de cette fonction j'ai eu très envie d'acheter des Twix :)))
+#BTW c'est pour faire des plot
+#Sinon y'avait la blague "scatter_ploter" qui est vraiment bonne, mais bon faut bien choisir
+function plot_twist(nb_echantillon,i,j,f,c)
+
+    echantillon_lambda = [1:nb_echantillon]/nb_echantillon
+    plot!(xlabel = "lambda")
+    plot!(ylabel = "z value")
+    echantillon_z_init = Vector{Float64}(undef,nb_echantillon)
+    echantillon_z_opt = Vector{Float64}(undef,nb_echantillon)
+
+    for k in 1:nb_echantillon
+        lambda = k/nb_echantillon
+        x_init,y_init = greedyConstruction(i,j,f,c,lambda)
+        x_opt,y_opt = localSearch(i,j,x_init,y_init,f,c,lambda)
+        z_init = zValue_pondere(i,j,x_init,y_init,f,c,lambda)
+        z_opt = zValue_pondere(i,j,x_opt,y_opt,f,c,lambda)
+        echantillon_z_init[k] = z_init
+        echantillon_z_opt[k] = z_opt
+        
+    end
+    scatter(echantillon_lambda, [echantillon_z_init,echantillon_z_opt] ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
+    #scatter(echantillon_lambda, echantillon_z_opt ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
+end
+
 
 main()
