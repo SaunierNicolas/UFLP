@@ -26,7 +26,6 @@ function greedyConstruction(n_client,n_site,f,c,l)
     
     x = remplirX(n_client, y, c,l)
 
-    println(x)
     #Les depots à ouvrir en plus :
     sumCost = 0
 

@@ -1,12 +1,13 @@
 include("greedyInit.jl")
 include("localSearch.jl")
+include("parser.jl")
 
 #import Pkg; Pkg.add("Plots")
 using Plots
 #=Un UFLP : 
 Soit :
     -i le nombre de client 
-    -j le nombre de site pou vant acceuillir un depot
+    -j le nombre de site pouvant acceuillir un depot
 Var de decision :
     -matrice binaire x_ij (1 si le client i est déservie par le depot du site j)
     -vecteur binaire y_j (1 si le depot du site j est ouvert)
@@ -16,7 +17,7 @@ Donnee :
 =#
 
 function main()
-    
+    #=
     #instance de test----------------------------------------------------------
     #6 sites
     j = 6
@@ -58,7 +59,7 @@ function main()
 
     c = [c_1,c_2]
 
-    #=
+    
     x_init = [
          #y=[1,0,0,1,1,0]
             [0,0,0,1,0,0],
@@ -74,8 +75,16 @@ function main()
         ]
 
     y_init = [1,0,0,1,1,0]
-=#
-    plot_twist(10,i,j,f,c)
+
+    plot_twist(10,i,j,f,c)=#
+
+
+    dataFiles = getfname()
+    i,j,f1,c1 = loadUFLP(dataFiles[1])
+    i,j,f2,c2 = loadUFLP(dataFiles[2])
+    f = [f1,f2]
+    c = [c1,c2]
+    plot_twist(100,i,j,f,c)
 
 end
 
