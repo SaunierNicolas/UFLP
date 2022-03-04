@@ -79,12 +79,14 @@ function main()
     plot_twist(10,i,j,f,c)=#
 
 
+
+
     dataFiles = getfname()
     i,j,f1,c1 = loadUFLP(dataFiles[1])
     i,j,f2,c2 = loadUFLP(dataFiles[2])
     f = [f1,f2]
     c = [c1,c2]
-    plot_twist(100,i,j,f,c)
+    plot_twist(10,i,j,f,c)
 
 end
 
@@ -107,11 +109,13 @@ function plot_twist(nb_echantillon,i,j,f,c)
         z_opt = zValue_pondere(i,j,x_opt,y_opt,f,c,lambda)
         echantillon_z_init[k] = z_init
         echantillon_z_opt[k] = z_opt
-        
+        println("init : ",z_init/1000," opt : ",z_opt/1000)
     end
+
+
+
     scatter(echantillon_lambda, [echantillon_z_init,echantillon_z_opt] ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
-    #scatter(echantillon_lambda, echantillon_z_opt ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
 end
 
 
-main()
+#main()
