@@ -1,6 +1,7 @@
 include("greedyInit.jl")
 include("localSearch.jl")
 include("parser.jl")
+include("filtering.jl")
 
 #import Pkg; Pkg.add("Plots")
 using Plots
@@ -17,7 +18,7 @@ Donnee :
 =#
 
 function main()
-    #=
+    
     #instance de test----------------------------------------------------------
     #6 sites
     j = 6
@@ -75,16 +76,18 @@ function main()
         ]
 
     y_init = [1,0,0,1,1,0]
+    #plot_twist(10,i,j,f,c)
 
-    plot_twist(10,i,j,f,c)=#
-
-
+    #=
     dataFiles = getfname()
     i,j,f1,c1 = loadUFLP(dataFiles[1])
     i,j,f2,c2 = loadUFLP(dataFiles[2])
     f = [f1,f2]
     c = [c1,c2]
-    plot_twist(100,i,j,f,c)
+    plot_twist(100,i,j,f,c)=#
+
+
+    println(filter(i,j,[1,1,1,1,1,1],c))
 
 end
 
@@ -113,5 +116,7 @@ function plot_twist(nb_echantillon,i,j,f,c)
     #scatter(echantillon_lambda, echantillon_z_opt ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
 end
 
+function plot_second()
+end
 
 main()
