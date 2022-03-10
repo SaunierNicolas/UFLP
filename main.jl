@@ -1,6 +1,7 @@
 include("greedyInit.jl")
 include("localSearch.jl")
 include("parser.jl")
+include("filtering.jl")
 
 #import Pkg; Pkg.add("Plots")
 using Plots
@@ -17,7 +18,7 @@ Donnee :
 =#
 
 function main()
-    #=
+    
     #instance de test----------------------------------------------------------
     #6 sites
     j = 6
@@ -76,18 +77,61 @@ function main()
 
     y_init = [1,0,0,1,1,0]
 
-    plot_twist(10,i,j,f,c)=#
+    #plot_twist(10,i,j,f,c)
 
-
-
-
+    #points = filter(i,j,[1,1,0,0,0,0],c)
+    
+    #plot_filtered(points)
+    #=
     dataFiles = getfname()
-    i,j,f1,c1 = loadUFLP(dataFiles[1])
-    i,j,f2,c2 = loadUFLP(dataFiles[2])
-    f = [f1,f2]
-    c = [c1,c2]
-    plot_twist(10,i,j,f,c)
 
+    i,j,f_raw,c_raw = loadUFLP(dataFiles[1])
+
+    i = 25
+    c1 = c_raw[1:25]
+    c2 = c_raw[26:50]
+
+    f1 = f_raw[1:8]
+    f2 = f_raw[9:16]
+
+    f = [f1,f2]
+    c = [c1,c2]=#
+
+    #println(" i : ", i ,"j : ",j)
+    #plot_twist(10,i,j,f,c)
+    #plot_filtered(filter(i,j,[1,0,1,0,1,0,0,1,1,1,1,0,1,1,0,1],c))
+    
+    #filter(i,j,ones(Int,j),c)
+    list_y = echantillonnage(i,j,f,c,100)
+
+    coord1 = []
+    coord2 = []
+
+    for k = 1:length(list_y)
+        #points = union(points,filter(i,j,list_y[k],c))
+        println("y ",k," : ",list_y[k])
+        a,b = VectCouple_to_vect(filter(i,j,list_y[k],c))
+        coord1 = push!(coord1,a)
+        coord2 = push!(coord2,b)
+    end
+
+    scatter(coord1,coord2)
+end
+
+function echantillonnage(i,j,f,c,nb_echant)
+
+    list_y = []
+
+    pas = 1/nb_echant
+
+    for k = 1:nb_echant
+        x,y = greedyConstruction(i,j,f,c,k*pas)
+        if !(y in list_y)
+            list_y = push!(list_y,y)
+        end
+    end
+
+    return list_y
 end
 
 #En écrivant le nom de cette fonction j'ai eu très envie d'acheter des Twix :)))
@@ -117,5 +161,21 @@ function plot_twist(nb_echantillon,i,j,f,c)
     scatter(echantillon_lambda, [echantillon_z_init,echantillon_z_opt] ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
 end
 
+function VectCouple_to_vect(points)
+    
+    x = Vector{Float64}(undef,0)
+    y = Vector{Float64}(undef,0)
 
-#main()
+    for i = 1:length(points)
+        a,b = points[i]
+        x = push!(x,a)
+        y = push!(y,b)
+    end
+
+    return x,y
+end
+
+
+
+
+main()
