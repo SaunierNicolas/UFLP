@@ -106,16 +106,25 @@ function main()
 
     coord1 = []
     coord2 = []
-
+    points = []
+    
     for k = 1:length(list_y)
-        #points = union(points,filter(i,j,list_y[k],c))
+        points = union(points,filter(i,j,list_y[k],c))
         println("y ",k," : ",list_y[k])
-        a,b = VectCouple_to_vect(filter(i,j,list_y[k],c))
+        a,b = VectCouple_to_vect(points)
         coord1 = push!(coord1,a)
         coord2 = push!(coord2,b)
     end
 
-    scatter(coord1,coord2)
+
+    #scatter(coord1,coord2)
+    
+    points_final = eff(points)
+
+    a,b = VectCouple_to_vect(points_final)
+
+    scatter(a,b)
+
 end
 
 function echantillonnage(i,j,f,c,nb_echant)
