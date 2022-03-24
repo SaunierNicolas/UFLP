@@ -123,7 +123,7 @@ function main()
 
     a,b = VectCouple_to_vect(points_final)
 
-    scatter(a,b)
+    #scatter(a,b)
 
 end
 

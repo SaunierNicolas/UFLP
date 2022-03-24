@@ -1,49 +1,28 @@
-include("greedyInit.jl")
-include("localSearch.jl")
-include("parser.jl")
+include("inter01.jl")
+include("filtering.jl")
+include("lowerHull.jl")
 
 function test()
-
-    f1 = [1,2,3,4]
-
     c1 = [
-        [1,2,3,4],
-        [1,2,3,4],
-        [1,2,3,4],
-        [1,2,3,4],
-        [1,2,3,4]
+        [3,2,4],
+        [6,3,2],
+        [2,7,4],
+        [8,5,6]
     ]
-
-    f2 = [10,20,30,40]
     c2 = [
-        [10,20,30,40],
-        [10,20,30,40],
-        [10,20,30,40],
-        [10,20,30,40],
-        [10,20,30,40]
+        [7,3,1],
+        [6,4,2],
+        [4,3,5],
+        [2,8,7]
     ]
 
-    f = [f1,f2]
     c = [c1,c2]
 
-    y = [0,0,1,1]
-    
-    x = [
-        [0,0,0,1],
-        [0,0,0,1],
-        [0,0,0,1],
-        [0,0,0,1],
-        [0,0,0,1]
-    ]
+    droites = generationDroite(4,3,1,c)
 
-    l = 0 
+    points = lowerHull(droites)
 
-    #println("z value ponderee :" ,zValue_pondere(5,4,x,y,f,c,l))
-
-    x_opt,y_opt = localSearch(5,4,x,y,f,c,l)
-
-    println("y opt : ",y_opt)
-    println("x opt : ",x_opt)
+    println(points)
 
 end
 
