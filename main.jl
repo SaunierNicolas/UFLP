@@ -78,17 +78,70 @@ function main()
     y_init = [1,0,0,1,1,0]
     #plot_twist(10,i,j,f,c)
 
+    #plot_twist(10,i,j,f,c)
+
+    #points = filter(i,j,[1,1,0,0,0,0],c)
+    
+    #plot_filtered(points)
     #=
     dataFiles = getfname()
-    i,j,f1,c1 = loadUFLP(dataFiles[1])
-    i,j,f2,c2 = loadUFLP(dataFiles[2])
+
+    i,j,f_raw,c_raw = loadUFLP(dataFiles[1])
+
+    i = 25
+    c1 = c_raw[1:25]
+    c2 = c_raw[26:50]
+
+    f1 = f_raw[1:8]
+    f2 = f_raw[9:16]
+
     f = [f1,f2]
-    c = [c1,c2]
-    plot_twist(100,i,j,f,c)=#
+    c = [c1,c2]=#
+
+    #println(" i : ", i ,"j : ",j)
+    #plot_twist(10,i,j,f,c)
+    #plot_filtered(filter(i,j,[1,0,1,0,1,0,0,1,1,1,1,0,1,1,0,1],c))
+    
+    #filter(i,j,ones(Int,j),c)
+    list_y = echantillonnage(i,j,f,c,100)
+
+    coord1 = []
+    coord2 = []
+    points = []
+    
+    for k = 1:length(list_y)
+        points = union(points,filter(i,j,list_y[k],c))
+        println("y ",k," : ",list_y[k])
+        a,b = VectCouple_to_vect(points)
+        coord1 = push!(coord1,a)
+        coord2 = push!(coord2,b)
+    end
 
 
-    println(filter(i,j,[1,1,1,1,1,1],c))
+    #scatter(coord1,coord2)
+    
+    points_final = eff(points)
 
+    a,b = VectCouple_to_vect(points_final)
+
+    #scatter(a,b)
+
+end
+
+function echantillonnage(i,j,f,c,nb_echant)
+
+    list_y = []
+
+    pas = 1/nb_echant
+
+    for k = 1:nb_echant
+        x,y = greedyConstruction(i,j,f,c,k*pas)
+        if !(y in list_y)
+            list_y = push!(list_y,y)
+        end
+    end
+
+    return list_y
 end
 
 #En écrivant le nom de cette fonction j'ai eu très envie d'acheter des Twix :)))
@@ -110,13 +163,29 @@ function plot_twist(nb_echantillon,i,j,f,c)
         z_opt = zValue_pondere(i,j,x_opt,y_opt,f,c,lambda)
         echantillon_z_init[k] = z_init
         echantillon_z_opt[k] = z_opt
-        
+        println("init : ",z_init/1000," opt : ",z_opt/1000)
     end
+
+
+
     scatter(echantillon_lambda, [echantillon_z_init,echantillon_z_opt] ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
-    #scatter(echantillon_lambda, echantillon_z_opt ,label = ["init" "local_opt"],xlabel="lambda",ylabel="z value")
 end
 
-function plot_second()
+function VectCouple_to_vect(points)
+    
+    x = Vector{Float64}(undef,0)
+    y = Vector{Float64}(undef,0)
+
+    for i = 1:length(points)
+        a,b = points[i]
+        x = push!(x,a)
+        y = push!(y,b)
+    end
+
+    return x,y
 end
+
+
+
 
 main()

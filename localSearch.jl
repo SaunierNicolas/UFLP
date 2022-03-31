@@ -7,10 +7,10 @@ function localSearch(i,j,x,y,f,c,l)
 
     #println("kp 2-1")
     #println("z1 : ",zValue(i,j,x_new,y_new,f[1],c[1]),", z2 : ",zValue(i,j,x_new,y_new,f[2],c[2]),y_new," zp : ",zValue_pondere(i,j,x_new,y_new,f,c,l))
-    change,y_new = kp_2_1(i,j,x_new,y_new,f,c,l)
+    change,y_new = kp_1_1(i,j,x_new,y_new,f,c,l)
     while change == true
         #println("z1 : ",zValue(i,j,x_new,y_new,f[1],c[1]),", z2 : ",zValue(i,j,x_new,y_new,f[2],c[2]),y_new," zp : ",zValue_pondere(i,j,x_new,y_new,f,c,l))
-        change,y_new = kp_2_1(i,j,x_new,y_new,f,c,l)
+        change,y_new = kp_1_1(i,j,x_new,y_new,f,c,l)
     end
 
     x_new = pairingClient(i,j,y_new,c,l)
@@ -109,11 +109,11 @@ function kp_2_1(i,j,x,y,f,c,l)
 end
 
 #Retourne si le kp 1-1 est applicable, et le vecteur y post-kp.
-#=function kp_1_1(i,j,x,y,f,c)
+function kp_1_1(i,j,x,y,f,c,l)
 
     kp11_feasability = false
     y_new = deepcopy(y)
-    z_init = zValue(i,j,x,y,f,c)
+    z_init = zValue_pondere(i,j,x,y,f,c,l)
  
 
     #Listes contenant les indices des site ouverts (1) ou fermées (0).
@@ -130,42 +130,44 @@ end
     end
 
     #Si il y a moins de 1 site ouverts, pas de kp 1-1 possible.
-    if (length(indice_1) < 1)
+    if (length(indice_1) < 2)
         return false,y
     end
 
     #Recherche d'un kp 1-1.
     for a = 1:length(indice_1)
-        for b = 1:length(indice_0)
+            for d = 1:length(indice_0)
+                
+                if (a!=d)
 
-            if (a!=b)
-                #swapping
-                y_new[indice_1[a]] = 0
-                y_new[indice_0[b]] = 1
+                    #swapping
+                    y_new[indice_1[a]] = 0
+                    y_new[indice_0[d]] = 1
 
-                #println(a,",",b,",",d," : ",y)
+                    #println(a,",",b,",",d," : ",y)
 
-                #évaluation de la nouvelle solution
-                x_new = pairingClient(i,j,y_new,c)
-                z_new = zValue(i,j,x_new,y_new,f,c)
-                println(z_new,",",z_init)
-                if (z_new < z_init)
-                    kp21_feasability = true
-                    return kp21_feasability,y_new
+                    #évaluation de la nouvelle solution
+                    x_new = pairingClient(i,j,y_new,c,l)
+                    z_new = zValue_pondere(i,j,x_new,y_new,f,c,l)
+
+                    if (z_new < z_init)
+                        println("z_new : ",z_new," z_init : ",z_init)
+                        println("x_new : ",x_new," x_init ",x )
+                        println("y_new : ",y_new," y_init ",y )
+                        kp11_feasability = true
+                        return kp11_feasability,y_new
+                    end
+
+                    #unswapping
+                    y_new[indice_1[a]] = 1
+                    y_new[indice_0[d]] = 0
                 end
-
-                #unswapping
-                y_new[a] = 1
-                y_new[b] = 0
-
             end
-            
-        end
+        
     end
-    println("fin")
     kp11_feasability = false
     return kp11_feasability,y_new
-end=#
+end
 
 
 
