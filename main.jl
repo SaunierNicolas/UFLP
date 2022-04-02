@@ -2,6 +2,7 @@ include("greedyInit.jl")
 include("localSearch.jl")
 include("parser.jl")
 include("filtering.jl")
+include("inter01.jl")
 
 #import Pkg; Pkg.add("Plots")
 using Plots
@@ -26,8 +27,8 @@ function main()
     i = 10
 
     #cout ouverture site
-    f_1 = [10,7,3,11,5,4]
-    f_2 = [3,2,12,9,1,7]
+    f_1 = [7,7,3,11,5,4]
+    f_2 = [3,2,12,9,10,7]
 
     f = [f_1,f_2]
 
@@ -36,8 +37,8 @@ function main()
         [7,2,1,9,7,3],
         [3,2,4,8,2,1],
         [1,2,4,6,1,6],
-        [4,1,6,1,3,4],
-        [6,5,3,2,7,2],
+        [4,1,6,9,3,4],
+        [6,5,3,6,7,2],
         [2,6,9,9,4,1],
         [9,2,9,4,6,9],
         [1,1,7,6,1,5],
@@ -48,9 +49,9 @@ function main()
     c_2 = [
         [9,7,3,5,8,1],
         [1,2,6,4,1,9],
-        [6,6,1,1,6,7],
+        [6,6,1,9,6,7],
         [5,4,5,5,2,1],
-        [3,6,4,3,9,1],
+        [3,6,4,9,9,1],
         [1,3,8,6,1,3],
         [3,4,5,6,8,9],
         [1,6,1,8,2,3],
@@ -76,6 +77,11 @@ function main()
         ]
 
     y_init = [1,0,0,1,1,0]
+
+
+    
+
+
     #plot_twist(10,i,j,f,c)
 
     #plot_twist(10,i,j,f,c)
@@ -103,12 +109,12 @@ function main()
     #plot_filtered(filter(i,j,[1,0,1,0,1,0,0,1,1,1,1,0,1,1,0,1],c))
     
     #filter(i,j,ones(Int,j),c)
-    list_y = echantillonnage(i,j,f,c,100)
+    #list_y = echantillonnage(i,j,f,c,100)
 
     coord1 = []
     coord2 = []
     points = []
-    
+    #=
     for k = 1:length(list_y)
         points = union(points,filter(i,j,list_y[k],c))
         println("y ",k," : ",list_y[k])
@@ -116,15 +122,25 @@ function main()
         coord1 = push!(coord1,a)
         coord2 = push!(coord2,b)
     end
+    =#
 
+    #filter(i,j,list_y[1],c)
+    #println()
 
     #scatter(coord1,coord2)
     
-    points_final = eff(points)
+    #points_final = eff(points)
 
-    a,b = VectCouple_to_vect(points_final)
+    #a,b = VectCouple_to_vect(points_final)
 
     #scatter(a,b)
+
+
+    droites = generationDroiteSite(i,j,c,f)
+    
+    greedyInit_inter01(i,j,f,c)
+    plotDroites(droites)
+
 
 end
 
@@ -144,9 +160,7 @@ function echantillonnage(i,j,f,c,nb_echant)
     return list_y
 end
 
-#En écrivant le nom de cette fonction j'ai eu très envie d'acheter des Twix :)))
-#BTW c'est pour faire des plot
-#Sinon y'avait la blague "scatter_ploter" qui est vraiment bonne, mais bon faut bien choisir
+
 function plot_twist(nb_echantillon,i,j,f,c)
 
     echantillon_lambda = [1:nb_echantillon]/nb_echantillon

@@ -43,7 +43,7 @@ function filter(I,J,y,c)
     for i = 1:I
         to_filter = push!(to_filter,eff(points[i]))
     end
-
+    display(to_filter)
     filtered = deepcopy(to_filter[1])
   
  
