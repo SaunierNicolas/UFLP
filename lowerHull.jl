@@ -1,9 +1,10 @@
 
-mutable struct DroiteIntervale
+mutable struct DroiteSite
     a::Rational{Int64}
     b::Rational{Int64}
     c1::Int64
     c2::Int64
+    site::Int64
 end # Une droite est représentée par une équation de la forme ax + by = 1
 
 # Début Convex hull (code modifié à partir d'une source sur internet à retrouver...)
@@ -13,6 +14,7 @@ mutable struct Point
     ind::Int64
     c1::Int64
     c2::Int64
+    site::Int64
 end
 
 function Base.isless(p::Point, q::Point)
@@ -45,20 +47,20 @@ end
 # Détermination d'une enveloppe inférieure de droite sur le segment [0,1] (En réalité, [-0.1,1])
 # Entrée : Vecteur de droites (dont on veut calculer l'enveloppe inférieure)
 # Sortie : Vecteur de droites (définissant l'enveloppe inférieure dans l'ordre)
-function lowerHull(Lc::Vector{DroiteIntervale})
+function lowerHull(Lc::Vector{DroiteSite})
     i::Int64 = 0
     count::Int64 = 1 # compteur
     nbPts::Int64 = length(Lc) + 3 # Nombres de points utilisés pour le calcul d'enveloppe convexe incluant les trois points "dummy"
     P::Vector{Point} = Vector{Point}(undef,nbPts)
-    Lr::Vector{DroiteIntervale} = Vector{DroiteIntervale}(undef,0)
+    Lr::Vector{DroiteSite} = Vector{DroiteSite}(undef,0)
 
   	for i in 1:length(Lc)
-        P[count] = Point(Lc[i].a,Lc[i].b,i,Lc[i].c1,Lc[i].c2)
+        P[count] = Point(Lc[i].a,Lc[i].b,i,Lc[i].c1,Lc[i].c2,Lc[i].site)
         count += 1
   	end # Boucle d'instanciation des points "légitimes"
-    P[count] = Point(-10,0,count,0,0) # Point "dummy" associé à la droite d'équation x = - 0.1 soit -10x = 1
-    P[count + 1] = Point(1,0,count + 1,0,0) # Point "dummy" associé à la droite d'équation x = 1
-    P[count + 2] = Point(0,-1,count + 2,0,0) # Point "dummy" associé à la droite d'équation -y = 1 soit y = -1
+    P[count] = Point(-10,0,count,0,0,0) # Point "dummy" associé à la droite d'équation x = - 0.1 soit -10x = 1
+    P[count + 1] = Point(1,0,count + 1,0,0,0) # Point "dummy" associé à la droite d'équation x = 1
+    P[count + 2] = Point(0,-1,count + 2,0,0,0) # Point "dummy" associé à la droite d'équation -y = 1 soit y = -1
 
   	PF::Vector{Point} = grahamscan(P) # PF contient les points qui ne sont pas situés à l'intérieur de l'enveloppe convexe
 
@@ -68,7 +70,7 @@ function lowerHull(Lc::Vector{DroiteIntervale})
         i += 1
     end # On saute les dummy points
     while (i <= length(PF)) && (PF[i].ind <= length(Lc)) # On s'arrête aux dummy points
-        push!(Lr,DroiteIntervale(PF[i].x,PF[i].y,PF[i].c1,PF[i].c2))
+        push!(Lr,DroiteSite(PF[i].x,PF[i].y,PF[i].c1,PF[i].c2,PF[i].site))
         i += 1
     end
     return Lr
