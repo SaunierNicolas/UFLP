@@ -1,10 +1,16 @@
-
-mutable struct DroiteSite
+mutable struct Droite
     a::Rational{Int64}
     b::Rational{Int64}
     c1::Int64
     c2::Int64
-    site::Int64
+end
+
+mutable struct DroiteLH
+    a::Rational{Int64}
+    b::Rational{Int64}
+    c1::Int64
+    c2::Int64
+    indice::Int64
 end # Une droite est représentée par une équation de la forme ax + by = 1
 
 # Début Convex hull (code modifié à partir d'une source sur internet à retrouver...)
@@ -14,7 +20,7 @@ mutable struct Point
     ind::Int64
     c1::Int64
     c2::Int64
-    site::Int64
+    indice::Int64
 end
 
 function Base.isless(p::Point, q::Point)
@@ -44,18 +50,30 @@ function halfhull(points::Vector{Point})
 end
 #Fin convex hull
 
+function conversion(droites::Vector{Droite})
+    n = length(droites)
+    Lc::Vector{DroiteLH} = Vector{DroiteLH}(undef,n)
+
+    for i = 1:n
+        Lc[i] = DroiteLH(droites[i].a,droites[i].b,droites[i].c1,droites[i].c2,i)
+    end
+
+    return Lc
+end
+
 # Détermination d'une enveloppe inférieure de droite sur le segment [0,1] (En réalité, [-0.1,1])
 # Entrée : Vecteur de droites (dont on veut calculer l'enveloppe inférieure)
 # Sortie : Vecteur de droites (définissant l'enveloppe inférieure dans l'ordre)
-function lowerHull(Lc::Vector{DroiteSite})
+function lowerHull(droites::Vector{Droite})
+    Lc = conversion(droites)
     i::Int64 = 0
     count::Int64 = 1 # compteur
     nbPts::Int64 = length(Lc) + 3 # Nombres de points utilisés pour le calcul d'enveloppe convexe incluant les trois points "dummy"
     P::Vector{Point} = Vector{Point}(undef,nbPts)
-    Lr::Vector{DroiteSite} = Vector{DroiteSite}(undef,0)
+    Lr::Vector{Droite} = Vector{Droite}(undef,0)
 
   	for i in 1:length(Lc)
-        P[count] = Point(Lc[i].a,Lc[i].b,i,Lc[i].c1,Lc[i].c2,Lc[i].site)
+        P[count] = Point(Lc[i].a,Lc[i].b,i,Lc[i].c1,Lc[i].c2,Lc[i].indice)
         count += 1
   	end # Boucle d'instanciation des points "légitimes"
     P[count] = Point(-10,0,count,0,0,0) # Point "dummy" associé à la droite d'équation x = - 0.1 soit -10x = 1
@@ -69,10 +87,12 @@ function lowerHull(Lc::Vector{DroiteSite})
     while (PF[i].ind > length(Lc))
         i += 1
     end # On saute les dummy points
+    indiceDroites::Vector{Int64} = Vector{Int64}(undef,0)
     while (i <= length(PF)) && (PF[i].ind <= length(Lc)) # On s'arrête aux dummy points
-        push!(Lr,DroiteSite(PF[i].x,PF[i].y,PF[i].c1,PF[i].c2,PF[i].site))
+        #push!(Lr,Droite(PF[i].x,PF[i].y,PF[i].c1,PF[i].c2))
+        push!(indiceDroites,PF[i].indice)
         i += 1
     end
-    return Lr
+    return indiceDroites
 end
 

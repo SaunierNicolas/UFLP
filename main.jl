@@ -136,7 +136,7 @@ function main()
     #scatter(a,b)
 
 
-    droites = generationDroiteSite(i,j,c,f)
+    droites = generationDroiteAffectationInitiale(i,j,c,f)
     
     greedyInit_inter01(i,j,f,c)
     plotDroites(droites)
