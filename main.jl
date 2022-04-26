@@ -139,7 +139,7 @@ function main()
     droites = generationDroiteAffectationInitiale(i,j,c,f)
     
     greedyInit_inter01(i,j,f,c)
-    plotDroites(droites)
+    #plotDroites(droites)
 
 
 end

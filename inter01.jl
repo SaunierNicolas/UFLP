@@ -56,39 +56,87 @@ function greedyInit_inter01(I,J,f,c)
     end        
     push!(lambdas,0.0)
 
-
-
     n = length(lambdas)
     for d = 1:length(polytope)
         polytope[n-d].borneSup = lambdas[d]
         polytope[n-d].borneInf = lambdas[d+1]
     end
 
-    println(lambdas)
+    # println(lambdas)
 
-    println("Affectation : ",)
-    for a = 1:length(polytope)
-        println(polytope[a].vecteurAffectation," sur [",polytope[a].borneInf,";",polytope[a].borneSup,"]")
+    new_affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
+    nbIter = 4
+
+    for n = 1:nbIter
+        polytope,new_affectations = generationPolytope(I,J,c,f,polytope) 
     end
 
-    affectationsOuvertes::Vector{Affectation} = Vector{Affectation}(undef,0)
-    affectationsFermees::Vector{Affectation} = Vector{Affectation}(undef,0)
 
+    println("polytope : ")
+    for a = polytope
+        println(a.vecteurAffectation,a.y," sur [",a.borneInf,";",a.borneSup,"]")
+    end
 
-    #Découpage en sous intervalles
+    droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(new_affectations))
+
+    for a = 1:length(new_affectations)
+        droites_new_affectations[a] = new_affectations[a].droiteCout
+    end
+
+    plotDroites(droites_new_affectations)
     
-    aff = affectations[1]
-    ouvertureSite(I,J,6,aff,c,f)
 
+end
 
+function generationPolytope(I,J,c,f,polytope)
+
+    new_affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
+
+    for a = polytope
+        for j = 1:J
+            union!(new_affectations,ouvertureSite(I,J,j,a,c,f))
+        end
+    end
+
+    droites_affectations::Vector{Droite} = Vector{Droite}(undef,length(new_affectations))
+
+    for a = 1:length(new_affectations)
+        #println(new_affectations[a].vecteurAffectation,new_affectations[a].y)
+        droites_affectations[a] = new_affectations[a].droiteCout
+    end
+
+    indices_affectations_polytopes = lowerHull(droites_affectations)
+
+    new_polytope = Vector{Affectation}(undef,0)
+
+    for i = 1:length(indices_affectations_polytopes)
+        push!(new_polytope,new_affectations[indices_affectations_polytopes[i]])
+    end
+
+    lambdas::Vector{Float64} = [1.0]
+
+    for d = 1:length(new_polytope)-1
+        cut,lambda = intersection(new_polytope[d].droiteCout,new_polytope[d+1].droiteCout)
+        push!(lambdas,lambda)
+    end        
+    push!(lambdas,0.0)
+
+    n = length(lambdas)
+    for d = 1:length(new_polytope)
+        new_polytope[n-d].borneSup = lambdas[d]
+        new_polytope[n-d].borneInf = lambdas[d+1]
+    end
+
+    return new_polytope,new_affectations
 end
 
 function ouvertureSite(I,J,s,a,c,f)
 
     droitesClient_s::Vector{Droite} = Vector{Droite}(undef,I)
-    y = a.y
+    y = deepcopy(a.y)
     y[s] = 1
 
+    #Generation des droites de cout clients relative au site s
     for i = 1:I
         c1 = c[1][i][s]
         c2 = c[2][i][s]
@@ -100,7 +148,7 @@ function ouvertureSite(I,J,s,a,c,f)
     end
 
     changement = []
-
+    #recherche des intersections, avec le site a ouvrir pour les deux cotes de la borne
     for i = 1:I
 
         cut,lambda = intersection(a.vecteurDroites[i],droitesClient_s[i])
@@ -128,10 +176,8 @@ function ouvertureSite(I,J,s,a,c,f)
         push!(changement,(bestSite_avant,bestSite_apres,lambda,i))
     end
 
-    lambdas::Vector{Float64} = Vector{Float64}(undef,0)
-
     changementCroissant = []
-
+    #Trie des intersections pour lambda croissant
     while length(changement) > 0
 
         min = 1 #indice du changement au plus petit lambda
@@ -149,7 +195,7 @@ function ouvertureSite(I,J,s,a,c,f)
         deleteat!(changement,min)
     end
 
-    println(changementCroissant)
+    #println(changementCroissant)
 
     affectation_decoupage = zeros(Int64,I)
     nouvellesAffectations::Vector{Affectation} = Vector{Affectation}(undef,0)
@@ -171,61 +217,56 @@ function ouvertureSite(I,J,s,a,c,f)
 
     end
 
-    println(affectation_decoupage)
+    #println(affectation_decoupage)
 
-    if length(changementLambda) > 0
-
-        lambdas_decoupage::Vector{Float64} = Vector{Float64}(undef,0)
-        push!(lambdas_decoupage,a.borneInf)
-        for k = 1:length(changementLambda)
-            trash1,trash2,lambda,trash3 = changementLambda[k]
-            push!(lambdas_decoupage,lambda)
-        end
-        push!(lambdas_decoupage,a.borneSup)
-        println(lambdas_decoupage)
-
-        #Affectation avant la premiere intersection
-        borneInf = lambdas_decoupage[1]
-        borneSup = lambdas_decoupage[2]
-
-        #Affectation à la borne inferieur des intersections
-        push!(nouvellesAffectations,
-            Affectation(
-                deepcopy(affectation_decoupage),
-                generationVecteurDroiteClientLambda(I,J,c,affectation_decoupage),
-                generationDroiteCoutAffectation(I,J,c,f,y,affectation_decoupage),
-                deepcopy(borneInf),deepcopy(borneSup),y
-            )
-        )
-
-
-        for k = 1:length(changementLambda)
-
-            borneInf = lambdas_decoupage[k+1]
-            borneSup = lambdas_decoupage[k+2]
-            
-            avant,apres,lambda,indiceClient = changementLambda[k]
-            affectation_decoupage[indiceClient] = apres
-            push!(nouvellesAffectations,
-            Affectation(
-                deepcopy(affectation_decoupage),
-                generationVecteurDroiteClientLambda(I,J,c,affectation_decoupage),
-                generationDroiteCoutAffectation(I,J,c,f,y,affectation_decoupage),
-                deepcopy(borneInf),deepcopy(borneSup),y
-            )
-        )
-        end
+    #Creation du vector contenant les valeurs bornantes (avec les lambdas donc)
+    lambdas_decoupage::Vector{Float64} = Vector{Float64}(undef,0)
+    push!(lambdas_decoupage,a.borneInf)
+    for k = 1:length(changementLambda)
+        trash1,trash2,lambda,trash3 = changementLambda[k]
+        push!(lambdas_decoupage,lambda)
     end
+    push!(lambdas_decoupage,a.borneSup)
+    #println(lambdas_decoupage)
 
+    #Affectation avant la premiere intersection
+    borneInf = lambdas_decoupage[1]
+    borneSup = lambdas_decoupage[2]
 
+    #Affectation à la borne inferieur, lorsqu'il n'y a pas encore d'intersection
+    push!(nouvellesAffectations,
+        Affectation(
+            deepcopy(affectation_decoupage),
+            generationVecteurDroiteClientLambda(I,J,c,affectation_decoupage),
+            generationDroiteCoutAffectation(I,J,c,f,y,affectation_decoupage),
+            deepcopy(borneInf),deepcopy(borneSup),y
+        )
+    )
+
+    #Affectation aux intersections, avec les variations
+    for k = 1:length(changementLambda)
+
+        borneInf = lambdas_decoupage[k+1]
+        borneSup = lambdas_decoupage[k+2]
+        
+        avant,apres,lambda,indiceClient = changementLambda[k]
+        affectation_decoupage[indiceClient] = apres
+        push!(nouvellesAffectations,
+        Affectation(
+            deepcopy(affectation_decoupage),
+            generationVecteurDroiteClientLambda(I,J,c,affectation_decoupage),
+            generationDroiteCoutAffectation(I,J,c,f,y,affectation_decoupage),
+            deepcopy(borneInf),deepcopy(borneSup),y
+        )
+    )
+    end
 
     println("Affectation : ",)
     for i = 1:length(nouvellesAffectations)
-        println(nouvellesAffectations[i].vecteurAffectation," sur [",nouvellesAffectations[i].borneInf,";",nouvellesAffectations[i].borneSup,"]")
+        println(nouvellesAffectations[i].vecteurAffectation," sur [",nouvellesAffectations[i].borneInf,";",nouvellesAffectations[i].borneSup,"]"," y : ",nouvellesAffectations[i].y)
     end
 
     return nouvellesAffectations
-    
 
 end
 
@@ -298,10 +339,8 @@ end
 
 function generationDroiteCoutAffectation(I,J,c,f,y,v_affect)
 
-
     c1 = 0
     c2 = 0
-
     #cout ouverture des sites
     for j = 1:J
         if y == 1
