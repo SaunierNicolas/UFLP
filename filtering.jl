@@ -19,7 +19,7 @@ function filter(I,J,y,c)
     #display(points)
     
 
-    override = true
+    override = false
     
     if override
         #override pour test

@@ -22,9 +22,9 @@ function main()
     
     #instance de test----------------------------------------------------------
     #6 sites
-    j = 6
+    J = 6
     #10 clients
-    i = 10
+    I = 10
 
     #cout ouverture site
     f_1 = [7,7,3,11,5,4]
@@ -135,11 +135,12 @@ function main()
 
     #scatter(a,b)
 
-
-    droites = generationDroiteAffectationInitiale(i,j,c,f)
     
-    greedyInit_inter01(i,j,f,c)
-    #plotDroites(droites)
+    ouvertures_sites::Vector{Vector{Int64}} = greedyInit_inter01(I,J,f,c)
+
+    for y = ouvertures_sites
+        filter(I,J,y,c)
+    end
 
 
 end

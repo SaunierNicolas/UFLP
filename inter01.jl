@@ -19,72 +19,90 @@ end
 
 function greedyInit_inter01(I,J,f,c)
 
-    #1ere iteration
-
-    affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
-
-    #Création des affectations initiales
-
-    droites_affectation_initial::Vector{Droite} = generationDroiteAffectationInitiale(I,J,c,f)
-
-    for j = 1:J
-
-        vecteurAffect::Vector{Int64} = fill(j,I)
-
-        droitesClient::Vector{Droite} = generationVecteurDroiteClientLambda(I,J,c,vecteurAffect)
-
-        y::Vector{Int64} = zeros(Int64,J)
-        y[j] = 1
-
-        a::Affectation = Affectation(vecteurAffect,droitesClient,droites_affectation_initial[j],0,1,y)
-        push!(affectations,a)
-
-    end
-
-    indices_affectations_polytopes = lowerHull(droites_affectation_initial)
-    polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
-
-    for i = 1:length(indices_affectations_polytopes)
-        push!(polytope,affectations[indices_affectations_polytopes[i]])
-    end
-    
-    lambdas::Vector{Float64} = [1.0]
-
-    for d = 1:length(polytope)-1
-        cut,lambda = intersection(polytope[d].droiteCout,polytope[d+1].droiteCout)
-        push!(lambdas,lambda)
-    end        
-    push!(lambdas,0.0)
-
-    n = length(lambdas)
-    for d = 1:length(polytope)
-        polytope[n-d].borneSup = lambdas[d]
-        polytope[n-d].borneInf = lambdas[d+1]
-    end
-
-    # println(lambdas)
+    polytope::Vector{Affectation} = generationAffectationInitiale(I,J,f,c) #1ere iteration
 
     new_affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
-    nbIter = 4
+    new_polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
 
-    for n = 1:nbIter
-        polytope,new_affectations = generationPolytope(I,J,c,f,polytope) 
+    #Ajout itératif de site 
+    for n = 1:J-1
+
+        new_polytope,new_affectations = generationPolytope(I,J,c,f,polytope)
+        union!(new_polytope,polytope)
+
+        droites_new_polytope::Vector{Droite} = Vector{Droite}(undef,length(new_polytope))
+        for d = 1:length(new_polytope)
+            droites_new_polytope[d] = new_polytope[d].droiteCout
+        end
+
+        indiceDroites_new_polytope::Vector{Int64} = lowerHull(droites_new_polytope)
+
+        polytope = Vector{Affectation}(undef,0)
+        for d = 1:length(indiceDroites_new_polytope)
+            push!(polytope,new_polytope[indiceDroites_new_polytope[d]])
+        end
+
+        lambdas::Vector{Float64} = [1.0]
+
+        for d = 1:length(polytope)-1
+
+            cut,lambda = intersection(polytope[d].droiteCout,polytope[d+1].droiteCout)
+
+            #Gestion des droites non-confondues qui se coupent sur lambda=0 ou lambda=1
+            if !cut #Ces droites ne sont pas identifiee par la fonction intersection()
+                if polytope[d].droiteCout.c1 == polytope[d+1].droiteCout.c1
+                    lambda = 0
+                elseif polytope[d].droiteCout.c2 == polytope[d+1].droiteCout.c2
+                    lambda = 1
+                end
+            end
+            push!(lambdas,lambda)
+        end        
+
+        push!(lambdas,0.0)
+
+            n = length(lambdas)
+        for d = 1:length(polytope)
+            polytope[n-d].borneSup = lambdas[d]
+            polytope[n-d].borneInf = lambdas[d+1]
+        end
+
     end
 
 
     println("polytope : ")
     for a = polytope
-        println(a.vecteurAffectation,a.y," sur [",a.borneInf,";",a.borneSup,"]")
+        println(a.vecteurAffectation,a.y," sur [",a.borneInf,";",a.borneSup,"] (",a.droiteCout.c1,",",a.droiteCout.c2,")")
     end
 
-    droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(new_affectations))
-
-    for a = 1:length(new_affectations)
-        droites_new_affectations[a] = new_affectations[a].droiteCout
+    # droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(new_affectations))
+    # for a = 1:length(new_affectations)
+    #     droites_new_affectations[a] = new_affectations[a].droiteCout
+    # end
+    
+    droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(polytope))
+    for a = 1:length(polytope)
+        droites_new_affectations[a] = polytope[a].droiteCout
     end
+
+    polytopeEtudiee = 5
+
+    
+    # droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(polyplot))
+
+    # for a = 1:length(polyplot)
+    #     droites_new_affectations[a] = polyplot[a].droiteCout
+    # end
 
     plotDroites(droites_new_affectations)
-    
+
+
+    ouvertures_sites::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,length(polytope))
+    for a = 1:length(polytope)
+        ouvertures_sites[a] = deepcopy(polytope[a].y)
+    end
+
+    return ouvertures_sites
 
 end
 
@@ -107,7 +125,7 @@ function generationPolytope(I,J,c,f,polytope)
 
     indices_affectations_polytopes = lowerHull(droites_affectations)
 
-    new_polytope = Vector{Affectation}(undef,0)
+    new_polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
 
     for i = 1:length(indices_affectations_polytopes)
         push!(new_polytope,new_affectations[indices_affectations_polytopes[i]])
@@ -116,16 +134,28 @@ function generationPolytope(I,J,c,f,polytope)
     lambdas::Vector{Float64} = [1.0]
 
     for d = 1:length(new_polytope)-1
+
         cut,lambda = intersection(new_polytope[d].droiteCout,new_polytope[d+1].droiteCout)
+
+        #Gestion des droites non-confondues qui se coupent sur lambda=0 ou lambda=1
+        if !cut #Ces droites ne sont pas identifiee par la fonction intersection()
+            if new_polytope[d].droiteCout.c1 == new_polytope[d+1].droiteCout.c1
+                lambda = 0
+            elseif new_polytope[d].droiteCout.c2 == new_polytope[d+1].droiteCout.c2
+                lambda = 1
+            end
+        end
         push!(lambdas,lambda)
     end        
-    push!(lambdas,0.0)
 
+    push!(lambdas,0.0)
+    
     n = length(lambdas)
     for d = 1:length(new_polytope)
         new_polytope[n-d].borneSup = lambdas[d]
         new_polytope[n-d].borneInf = lambdas[d+1]
     end
+    #println(lambdas)
 
     return new_polytope,new_affectations
 end
@@ -261,12 +291,60 @@ function ouvertureSite(I,J,s,a,c,f)
     )
     end
 
-    println("Affectation : ",)
-    for i = 1:length(nouvellesAffectations)
-        println(nouvellesAffectations[i].vecteurAffectation," sur [",nouvellesAffectations[i].borneInf,";",nouvellesAffectations[i].borneSup,"]"," y : ",nouvellesAffectations[i].y)
-    end
+    # println("Affectation : ",)
+    # for i = 1:length(nouvellesAffectations)
+    #     println(nouvellesAffectations[i].vecteurAffectation," sur [",nouvellesAffectations[i].borneInf,";",nouvellesAffectations[i].borneSup,"]"," y : ",nouvellesAffectations[i].y)
+    # end
 
     return nouvellesAffectations
+
+end
+
+function generationAffectationInitiale(I,J,f,c)
+
+
+    affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
+
+    #Création des affectations initiales
+
+    droites_affectation_initial::Vector{Droite} = generationDroiteAffectationInitiale(I,J,c,f)
+
+    for j = 1:J
+
+        vecteurAffect::Vector{Int64} = fill(j,I)
+
+        droitesClient::Vector{Droite} = generationVecteurDroiteClientLambda(I,J,c,vecteurAffect)
+
+        y::Vector{Int64} = zeros(Int64,J)
+        y[j] = 1
+
+        a::Affectation = Affectation(vecteurAffect,droitesClient,droites_affectation_initial[j],0,1,y)
+        push!(affectations,a)
+
+    end
+
+    indices_affectations_polytopes = lowerHull(droites_affectation_initial)
+    polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
+
+    for i = 1:length(indices_affectations_polytopes)
+        push!(polytope,affectations[indices_affectations_polytopes[i]])
+    end
+    
+    lambdas::Vector{Float64} = [1.0]
+
+    for d = 1:length(polytope)-1
+        cut,lambda = intersection(polytope[d].droiteCout,polytope[d+1].droiteCout)
+        push!(lambdas,lambda)
+    end        
+    push!(lambdas,0.0)
+
+    n = length(lambdas)
+    for d = 1:length(polytope)
+        polytope[n-d].borneSup = lambdas[d]
+        polytope[n-d].borneInf = lambdas[d+1]
+    end
+
+    return polytope
 
 end
 
@@ -384,7 +462,7 @@ function intersection(d1,d2)
     cut = false
     lambda = -1
 
-    if (d1.c1 < d2.c1 && d1.c2 > d2.c2) || (d1.c1 > d2.c1 && d1.c2 < d2.c2)
+    if ((d1.c1 < d2.c1 && d1.c2 > d2.c2) || (d1.c1 > d2.c1 && d1.c2 < d2.c2)) 
         cut = true
 
         nbLambda1 = d1.c2 - d1.c1
