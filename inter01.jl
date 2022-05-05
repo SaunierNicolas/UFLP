@@ -18,8 +18,9 @@ end
 
 
 function greedyInit_inter01(I,J,f,c)
-
+    
     polytope::Vector{Affectation} = generationAffectationInitiale(I,J,f,c) #1ere iteration
+    
 
     new_affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
     new_polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
@@ -70,10 +71,10 @@ function greedyInit_inter01(I,J,f,c)
     end
 
 
-    println("polytope : ")
-    for a = polytope
-        println(a.vecteurAffectation,a.y," sur [",a.borneInf,";",a.borneSup,"] (",a.droiteCout.c1,",",a.droiteCout.c2,")")
-    end
+    # println("polytope : ")
+    # for a = polytope
+    #     println(a.vecteurAffectation,a.y," sur [",a.borneInf,";",a.borneSup,"] (",a.droiteCout.c1,",",a.droiteCout.c2,")")
+    # end
 
     # droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(new_affectations))
     # for a = 1:length(new_affectations)
@@ -85,7 +86,6 @@ function greedyInit_inter01(I,J,f,c)
         droites_new_affectations[a] = polytope[a].droiteCout
     end
 
-    polytopeEtudiee = 5
 
     
     # droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(polyplot))
@@ -101,6 +101,9 @@ function greedyInit_inter01(I,J,f,c)
     for a = 1:length(polytope)
         ouvertures_sites[a] = deepcopy(polytope[a].y)
     end
+
+    #retrait des valeurs doublons
+    unique!(ouvertures_sites)
 
     return ouvertures_sites
 

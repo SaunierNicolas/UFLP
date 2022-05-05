@@ -3,6 +3,7 @@ include("localSearch.jl")
 include("parser.jl")
 include("filtering.jl")
 include("inter01.jl")
+include("parser.jl")
 
 #import Pkg; Pkg.add("Plots")
 using Plots
@@ -135,13 +136,45 @@ function main()
 
     #scatter(a,b)
 
+    c1,c2,f1,f2 = parser("F51-52.txt")
+
+    c = [c1,c2]
+    f = [f1,f2]
     
+    #Une solution est une liste de site ouvert, et une affectation des clients à ces sites.
+    #solutions::Vector{Tuple{Vector{Int64},Vector{Int64}}} = Vector{Tuple{Vector{Int64},Vector{Int64}}}(undef,0)
+
     ouvertures_sites::Vector{Vector{Int64}} = greedyInit_inter01(I,J,f,c)
+    #ouvertures_sites::Vector{Vector{Int64}} = echantillonnage(I,J,f,c,100)
+
+    affectations_clients::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,0)
+
+    groupe_points_c1::Vector{Vector{Float64}} = Vector{Vector{Float64}}(undef,0)
+    groupe_points_c2::Vector{Vector{Float64}} = Vector{Vector{Float64}}(undef,0)
 
     for y = ouvertures_sites
-        filter(I,J,y,c)
+        println(y)
+        
+
+        affectations_clients = affectationClient(I,J,y,c)
+        vecteur_couts::Vector{Tuple{Float64,Float64}} = Vector{Tuple{Float64,Float64}}(undef,0)
+        for x = affectations_clients
+            cout = cout_affectation(I,J,x,y,c,f)
+            push!(vecteur_couts,cout)
+        end
+
+        valeurs_axe_1,valeurs_axe_2 = VectCouple_to_vect(vecteur_couts)
+        push!(groupe_points_c1,valeurs_axe_1)
+        push!(groupe_points_c2,valeurs_axe_2)
     end
 
+    println("échantillonage : ")
+    ouvertures_sites_enchantillonage = echantillonnage(I,J,f,c,100)
+    for o = ouvertures_sites_enchantillonage
+        println(o)
+    end
+
+    scatter(groupe_points_c1,groupe_points_c2)
 
 end
 
@@ -161,6 +194,24 @@ function echantillonnage(i,j,f,c,nb_echant)
     return list_y
 end
 
+function affectation_to_points(liste_vecteurAffectation,I,J,c,f)
+
+    points::Vector{Tuple{Float64,Float64}} = Vector{Tuple{Float64,Float64}}(undef,0)
+
+    for a = liste_vecteurAffectation
+        c1 = 0
+        c2 = 0
+        for j = 1:J
+            i = a[j]
+            c1 += c[1][i][j]
+            c2 += c[2][i][j]
+        end
+        push!(points,(c1,c2))
+    end
+
+    return points
+
+end
 
 function plot_twist(nb_echantillon,i,j,f,c)
 
@@ -200,6 +251,28 @@ function VectCouple_to_vect(points)
     return x,y
 end
 
+function cout_affectation(I,J,x,y,c,f)
+
+    cout1::Float64 = 0
+    cout2::Float64 = 0
+
+
+    for j = 1:J
+        if y[j] == 1
+            cout1 += f[1][j]
+            cout2 += f[2][j]
+        end
+    end
+
+    for i = 1:I
+        j = x[i]
+        cout1 += c[1][i][j]
+        cout2 += c[2][i][j]
+    end
+
+    return cout1,cout2
+
+end
 
 
 

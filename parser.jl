@@ -1,84 +1,43 @@
-# --------------------------------------------------------------------------- #
-# Loading an instance of SPP (format: OR-library)
+function parser(fileToOpen::String)
+    fileDirectory = "Data/"*fileToOpen
+    file = open(fileDirectory)
+    line = readlines(file)
+    I = parse(Int64,line[1])
+    J = parse(Int64,line[2])
 
-function loadUFLP(fname)
-    cd("Data")
-    file=open(fname)
-    
+    c1::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,I)
+    c2::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,I)
   
-    n_site, n_client = parse.(Int, split(readline(file)) )
-    
-    f=zeros(Float64, n_site)
+    indice_c1 = 3
+    indice_c2 = 4+I
 
-    for i=1:n_site
-        capacity,f_cost = parse.(Float64, split(readline(file)))
-        f[i] = f_cost
-    end
-
-
-    c = Vector{Vector{Float64}}(undef,0)
-    for i = 1:n_client
-        push!(c,zeros(Float64,n_site))
-    end
-
-    for i = 1:n_client
-        demand = readline(file)
-
-        for j = 1:div(n_site,7)
-            cost = parse.(Float64, split(readline(file)))
-            for k = 1:7
-                c[i][k+(j-1)*7] = cost[k]
-            end
-            
-        end
-        if n_site % 7 > 0
-            cost = parse.(Float64, split(readline(file)))
-            for j = 1:(n_site % 7)
-                c[i][div(n_site,7)*7+j] = cost[j]
-            end
-        end
-    end
-    
-    close(file)
-    cd("..")
-    return n_client,n_site,f,c
-end
-
-# --------------------------------------------------------------------------- #
-# collect the un-hidden filenames available in a given directory
-
-function getfname()
-  # target : string := chemin + nom du repertoire ou se trouve les instances
-
-  # positionne le currentdirectory dans le repertoire cible
-  #cd(joinpath(homedir(),target)) 
-
-  # retourne le repertoire courant
-  #println("pwd = ", pwd())
-  cd("Data")
-  # recupere tous les fichiers se trouvant dans le repertoire data
-  allfiles = readdir()
-
-  # vecteur booleen qui marque les noms de fichiers valides
-  flag = trues(size(allfiles))
-
-  k=1  
-  for f in allfiles
-      # traite chaque fichier du repertoire
-      if f[1] != '.'
-          # pas un fichier cache => conserver
-          #println("fname = ", f) 
-      else
-          # fichier cache => supprimer
-          flag[k] = false
+    for i in 1:I
+      parsed_row_c1::Vector{String} = split(line[i+indice_c1]," ")
+      parsed_row_c2::Vector{String} = split(line[i+indice_c2]," ")
+      row_c1::Vector{Int64} = Vector{Int64}(undef,J)
+      row_c2::Vector{Int64} = Vector{Int64}(undef,J)
+      for j in 1:J
+        row_c1[j] = parse(Int64,parsed_row_c1[j])
+        row_c2[j] = parse(Int64,parsed_row_c2[j])
       end
-      k = k+1
-  end
+      c1[i] = deepcopy(row_c1)
+      c2[i] = deepcopy(row_c2)
+    end
 
-  # extrait les noms valides et retourne le vecteur correspondant
-  finstances = allfiles[flag]
+    f1::Vector{Int64} = Vector{Int64}(undef,J)
+    f2::Vector{Int64} = Vector{Int64}(undef,J)
 
-  cd("..")
-  return finstances
+
+    indice_f1 = (2*I)+6
+    indice_f2 = (2*I)+8
+
+    parsed_row_f1::Vector{String} = split(line[indice_f1]," ")
+    parsed_row_f2::Vector{String} = split(line[indice_f2]," ")
+
+     for i in 1:J
+        f1[i] = parse(Int64,parsed_row_f1[i])
+        f2[i] = parse(Int64,parsed_row_f2[i])
+      end
+
+    return c1,c2,f1,f2
 end
-

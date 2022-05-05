@@ -16,7 +16,7 @@ function filter(I,J,y,c)
         points = push!(points,row)
     end
 
-    #display(points)
+    # display(points)
     
 
     override = false
@@ -43,10 +43,12 @@ function filter(I,J,y,c)
     for i = 1:I
         to_filter = push!(to_filter,eff(points[i]))
     end
-    display(to_filter)
-    filtered = deepcopy(to_filter[1])
-  
  
+    
+    filtered = deepcopy(to_filter[1])
+    # display(filtered)
+    # println("-----------------------------------------------------------------------")
+
     #Filtrage linéaire.
     for i = 2:I
         new_filtered = []
@@ -59,7 +61,8 @@ function filter(I,J,y,c)
         end
 
         filtered = eff(new_filtered)
-
+        # display(filtered)
+        # println("-----------------------------------------------------------------------")
     end
     
     return filtered
@@ -104,25 +107,21 @@ function display(d)
 end
 
 function backtracking(filtered)
-    resultat = []
+    resultat::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,0)
     #pour chaque point
+    
     for i = 1:length(filtered)
-        solution = []
+        solution::Vector{Int64} = Vector{Int64}(undef,0)
         current = filtered[i]
         a,b,s,p = current
-        solution = push!(solution,s)
         while (p !== nothing)
-            solution = push!(solution,s)
+            push!(solution,s)
             current = p
             a,b,s,p = current
         end
-        
-        solution_returned = zeros(length(solution))
-        for j = 1:length(solution)
-            solution_returned[j] = solution[length(solution)-j+1]
-        end
+        push!(solution,s)
 
-        resultat = push!(resultat,solution_returned)
+        push!(resultat,solution)
     end
 
     return resultat
