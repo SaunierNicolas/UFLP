@@ -17,13 +17,20 @@ mutable struct Droite
 end
 
 
-function greedyInit_inter01(I,J,f,c)
+function greedyInit_inter01(I::Int64,J::Int64,f::Vector{Vector{Float64}},c::Vector{Vector{Vector{Float64}}})
     
     polytope::Vector{Affectation} = generationAffectationInitiale(I,J,f,c) #1ere iteration
     
-
     new_affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
     new_polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
+
+
+    # droitePlot = []
+    # for a = polytope
+    #     push!(droitePlot,a.droiteCout)
+    # end
+
+    #plotDroites(droitePlot)
 
     #Ajout itératif de site 
     for n = 1:J-1
@@ -57,12 +64,14 @@ function greedyInit_inter01(I,J,f,c)
                     lambda = 1
                 end
             end
+
             push!(lambdas,lambda)
-        end        
+        end
 
         push!(lambdas,0.0)
 
-            n = length(lambdas)
+        n = length(lambdas)
+
         for d = 1:length(polytope)
             polytope[n-d].borneSup = lambdas[d]
             polytope[n-d].borneInf = lambdas[d+1]
@@ -81,10 +90,10 @@ function greedyInit_inter01(I,J,f,c)
     #     droites_new_affectations[a] = new_affectations[a].droiteCout
     # end
     
-    droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(polytope))
-    for a = 1:length(polytope)
-        droites_new_affectations[a] = polytope[a].droiteCout
-    end
+    # droites_new_affectations::Vector{Droite} = Vector{Droite}(undef,length(polytope))
+    # for a = 1:length(polytope)
+    #     droites_new_affectations[a] = polytope[a].droiteCout
+    # end
 
 
     
@@ -94,7 +103,7 @@ function greedyInit_inter01(I,J,f,c)
     #     droites_new_affectations[a] = polyplot[a].droiteCout
     # end
 
-    plotDroites(droites_new_affectations)
+    #plotDroites(droites_new_affectations)
 
 
     ouvertures_sites::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,length(polytope))
@@ -109,10 +118,10 @@ function greedyInit_inter01(I,J,f,c)
 
 end
 
-function generationPolytope(I,J,c,f,polytope)
+function generationPolytope(I::Int64,J::Int64,c::Vector{Vector{Vector{Float64}}},f::Vector{Vector{Float64}},polytope::Vector{Affectation})
 
     new_affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
-
+ 
     for a = polytope
         for j = 1:J
             union!(new_affectations,ouvertureSite(I,J,j,a,c,f))
@@ -126,7 +135,7 @@ function generationPolytope(I,J,c,f,polytope)
         droites_affectations[a] = new_affectations[a].droiteCout
     end
 
-    indices_affectations_polytopes = lowerHull(droites_affectations)
+    indices_affectations_polytopes::Vector{Int64} = lowerHull(droites_affectations)
 
     new_polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
 
@@ -138,7 +147,7 @@ function generationPolytope(I,J,c,f,polytope)
 
     for d = 1:length(new_polytope)-1
 
-        cut,lambda = intersection(new_polytope[d].droiteCout,new_polytope[d+1].droiteCout)
+        cut::Bool,lambda::Float64 = intersection(new_polytope[d].droiteCout,new_polytope[d+1].droiteCout)
 
         #Gestion des droites non-confondues qui se coupent sur lambda=0 ou lambda=1
         if !cut #Ces droites ne sont pas identifiee par la fonction intersection()
@@ -163,31 +172,31 @@ function generationPolytope(I,J,c,f,polytope)
     return new_polytope,new_affectations
 end
 
-function ouvertureSite(I,J,s,a,c,f)
+function ouvertureSite(I::Int64,J::Int64,s::Int64,a::Affectation,c::Vector{Vector{Vector{Float64}}},f::Vector{Vector{Float64}})
 
     droitesClient_s::Vector{Droite} = Vector{Droite}(undef,I)
-    y = deepcopy(a.y)
+    y::Vector{Int64} = deepcopy(a.y)
     y[s] = 1
 
     #Generation des droites de cout clients relative au site s
     for i = 1:I
-        c1 = c[1][i][s]
-        c2 = c[2][i][s]
+        c1::Rational{Int64} = c[1][i][s]
+        c2::Rational{Int64} = c[2][i][s]
 
-        nb_lambda = c2 - c1
-        cst = c2
+        nb_lambda::Rational{Int64} = c2 - c1
+        cst::Rational{Int64} = c2
 
         droitesClient_s[i] = Droite(nb_lambda//cst,1//cst,c1,c2)
     end
 
-    changement = []
+    changement::Vector{Tuple{Int64,Int64,Float64,Int64}} = Vector{Tuple{Int64,Int64,Float64,Int64}}(undef,0)
     #recherche des intersections, avec le site a ouvrir pour les deux cotes de la borne
     for i = 1:I
 
-        cut,lambda = intersection(a.vecteurDroites[i],droitesClient_s[i])
+        cut::Bool,lambda::Float64 = intersection(a.vecteurDroites[i],droitesClient_s[i])
 
-        bestSite_avant = 0
-        bestSite_apres = 0
+        bestSite_avant::Int64 = 0
+        bestSite_apres::Int64 = 0
 
         if cut
             if a.vecteurDroites[i].c1 > droitesClient_s[i].c1
@@ -207,17 +216,18 @@ function ouvertureSite(I,J,s,a,c,f)
         end
 
         push!(changement,(bestSite_avant,bestSite_apres,lambda,i))
+        
     end
 
-    changementCroissant = []
-    #Trie des intersections pour lambda croissant
+    changementCroissant = Vector{Tuple{Int64,Int64,Float64,Int64}}(undef,0)
+    #Tri des intersections pour lambda croissant
     while length(changement) > 0
 
-        min = 1 #indice du changement au plus petit lambda
-        binfm,bsupm,lambdaMin,indiceClientm = changement[min]
+        min::Int64 = 1 #indice du changement au plus petit lambda
+        binfm::Float64,bsupm::Float64,lambdaMin::Float64,indiceClientm::Int64 = changement[min]
 
         for c = 2:length(changement)
-            binf,bsup,lambda,indiceClient = changement[c]
+            binf::Float64,bsup::Float64,lambda::Float64,indiceClient::Int64 = changement[c]
             if lambda < lambdaMin
                 min = c
                 binfm,bsupm,lambdaMin,indiceClientm = changement[min]
@@ -228,24 +238,30 @@ function ouvertureSite(I,J,s,a,c,f)
         deleteat!(changement,min)
     end
 
-    #println(changementCroissant)
-
-    affectation_decoupage = zeros(Int64,I)
+    affectation_decoupage::Vector{Int64} = zeros(Int64,I)
     nouvellesAffectations::Vector{Affectation} = Vector{Affectation}(undef,0)
     changementLambda::Vector{Tuple{Float64,Float64,Float64,Int64}} = Vector{Tuple{Float64,Float64,Float64,Int64}}(undef,0)
 
     #Fixation de toutes les affectations constantes
     for i = 1:I
 
-        avant,apres,lambda,indiceClient = changementCroissant[i]
+        avant::Int64,apres::Int64,lambda::Float64,indiceClient::Int64 = changementCroissant[i]
 
         if (lambda < a.borneInf)
             affectation_decoupage[indiceClient] = apres
         elseif (lambda > a.borneSup)
             affectation_decoupage[indiceClient] = avant
+            
         else # donc (lambda >= a.borneInf && lambda <= a.borneSup)
-            push!(changementLambda,(avant,apres,lambda,indiceClient))
-            affectation_decoupage[indiceClient] = avant
+            #Gestion des cas limites
+            if lambda == a.borneInf
+                affectation_decoupage[indiceClient] = apres
+            elseif lambda == a.borneSup
+                affectation_decoupage[indiceClient] = apres
+            else
+                push!(changementLambda,(avant,apres,lambda,indiceClient))
+                affectation_decoupage[indiceClient] = avant
+            end
         end
 
     end
@@ -256,17 +272,22 @@ function ouvertureSite(I,J,s,a,c,f)
     lambdas_decoupage::Vector{Float64} = Vector{Float64}(undef,0)
     push!(lambdas_decoupage,a.borneInf)
     for k = 1:length(changementLambda)
-        trash1,trash2,lambda,trash3 = changementLambda[k]
+        trash1,trash2,lambda::Float64,trash3 = changementLambda[k]
         push!(lambdas_decoupage,lambda)
     end
     push!(lambdas_decoupage,a.borneSup)
     #println(lambdas_decoupage)
-
+    if affectation_decoupage[1] == 0
+        println(affectation_decoupage)
+        println(lambdas_decoupage)
+        println(changementCroissant)
+    end
     #Affectation avant la premiere intersection
-    borneInf = lambdas_decoupage[1]
-    borneSup = lambdas_decoupage[2]
+    borneInf::Float64 = lambdas_decoupage[1]
+    borneSup::Float64 = lambdas_decoupage[2]
 
     #Affectation à la borne inferieur, lorsqu'il n'y a pas encore d'intersection
+    
     push!(nouvellesAffectations,
         Affectation(
             deepcopy(affectation_decoupage),
@@ -282,7 +303,7 @@ function ouvertureSite(I,J,s,a,c,f)
         borneInf = lambdas_decoupage[k+1]
         borneSup = lambdas_decoupage[k+2]
         
-        avant,apres,lambda,indiceClient = changementLambda[k]
+        avant::Int64,apres::Int64,lambda::Float64,indiceClient::Int64 = changementLambda[k]
         affectation_decoupage[indiceClient] = apres
         push!(nouvellesAffectations,
         Affectation(
@@ -303,7 +324,7 @@ function ouvertureSite(I,J,s,a,c,f)
 
 end
 
-function generationAffectationInitiale(I,J,f,c)
+function generationAffectationInitiale(I::Int64,J::Int64,f::Vector{Vector{Float64}},c::Vector{Vector{Vector{Float64}}})
 
 
     affectations::Vector{Affectation} = Vector{Affectation}(undef,0)
@@ -322,11 +343,11 @@ function generationAffectationInitiale(I,J,f,c)
         y[j] = 1
 
         a::Affectation = Affectation(vecteurAffect,droitesClient,droites_affectation_initial[j],0,1,y)
-        push!(affectations,a)
+        push!(affectations,deepcopy(a))
 
-    end
+    end 
 
-    indices_affectations_polytopes = lowerHull(droites_affectation_initial)
+    indices_affectations_polytopes::Vector{Int64} = lowerHull(droites_affectation_initial)
     polytope::Vector{Affectation} = Vector{Affectation}(undef,0)
 
     for i = 1:length(indices_affectations_polytopes)
@@ -336,12 +357,13 @@ function generationAffectationInitiale(I,J,f,c)
     lambdas::Vector{Float64} = [1.0]
 
     for d = 1:length(polytope)-1
-        cut,lambda = intersection(polytope[d].droiteCout,polytope[d+1].droiteCout)
+        cut::Bool,lambda::Float64 = intersection(polytope[d].droiteCout,polytope[d+1].droiteCout)
         push!(lambdas,lambda)
-    end        
+    end     
+      
     push!(lambdas,0.0)
 
-    n = length(lambdas)
+    n::Int64 = length(lambdas)
     for d = 1:length(polytope)
         polytope[n-d].borneSup = lambdas[d]
         polytope[n-d].borneInf = lambdas[d+1]
@@ -352,19 +374,19 @@ function generationAffectationInitiale(I,J,f,c)
 end
 
 
-function generationVecteurDroiteClientLambda(I,J,c,v_affect)
+function generationVecteurDroiteClientLambda(I::Int64,J::Int64,c::Vector{Vector{Vector{Float64}}},v_affect::Vector{Int64})
 
     vecteurDroite::Vector{Droite} = Vector{Droite}(undef,I)
     
         for i = 1:I
 
-            j = v_affect[i] #recuperation de l'indice du site affecte au client i
+            j::Int64 = v_affect[i] #recuperation de l'indice du site affecte au client i
 
-            c1 = c[1][i][j]
-            c2 = c[2][i][j]
+            c1::Rational{Int64} = c[1][i][j]
+            c2::Rational{Int64} = c[2][i][j]
 
-            nb_lambda = c2 - c1
-            cst = c2
+            nb_lambda::Rational{Int64} = c2 - c1
+            cst::Rational{Int64} = c2
 
             vecteurDroite[i] = Droite(nb_lambda//cst,1//cst,c1,c2)
 
@@ -376,14 +398,14 @@ end
 
 #l'affectation est sous forme de vecteur de taille I, contenant l'indice du site ou le client est affecté.
 
-function affectationCost(I,affect,c,lambda)
+function affectationCost(I::Int64,affect::Affectation,c::Vector{Vector{Vector{Float64}}},lambda::Float64)
 
-    sum = 0
+    sum::Int64 = 0
     for i = 1:I
-        j = affect[i]
-        c1 = c[1][i][j] * lambda
-        c2 = c[2][i][j] * (1-lambda)
-        sum += c1 + c2
+        j::Int64 = affect[i]
+        c1::Float64 = c[1][i][j] * lambda
+        c2::Float64 = c[2][i][j] * (1-lambda)
+        sum::Float64 += c1 + c2
     end
     return sum
 
@@ -397,8 +419,8 @@ function generationDroiteAffectationInitiale(I,J,c,f)
     for j = 1:J
 
         #cout ouverture du site j
-        c1 = f[1][j]
-        c2 = f[2][j]
+        c1::Rational{Int64} = f[1][j]
+        c2::Rational{Int64} = f[2][j]
 
         #cout affectation de tout les clients au site
         for i = 1:I
@@ -408,8 +430,8 @@ function generationDroiteAffectationInitiale(I,J,c,f)
 
         end
 
-        nb_lambda = c2 - c1
-        cst = c2
+        nb_lambda::Rational{Int64} = c2 - c1
+        cst::Rational{Int64} = c2
         
         droites[j] = Droite(nb_lambda//cst,1//cst,c1,c2)
     end
@@ -420,8 +442,8 @@ end
 
 function generationDroiteCoutAffectation(I,J,c,f,y,v_affect)
 
-    c1 = 0
-    c2 = 0
+    c1::Rational{Int64} = 0.0
+    c2::Rational{Int64} = 0.0
     #cout ouverture des sites
     for j = 1:J
         if y == 1
@@ -433,20 +455,20 @@ function generationDroiteCoutAffectation(I,J,c,f,y,v_affect)
     #cout affectation de tout les clients
     for i = 1:I
 
-        j = v_affect[i]
+        j::Int64 = v_affect[i]
 
         c1 += c[1][i][j]
         c2 += c[2][i][j]
 
     end
 
-    nb_lambda = c2 - c1
-    cst = c2
+    nb_lambda::Rational{Int64} = c2 - c1
+    cst::Rational{Int64} = c2
 
     return Droite(nb_lambda//cst,1//cst,c1,c2)
 end
 
-function plotDroites(droites)
+function plotDroites(droites::Vector{Droite},lbl)
     x = []
     y = []
     max_y = 0
@@ -457,24 +479,31 @@ function plotDroites(droites)
         max_y = max(droites[i].c1,droites[i].c2,max_y)
     end
 
-    plot(x,y,xlims=(0,1),ylims=(0,max_y))
+    plot(x,y,xlims=(0,1),ylims=(0,max_y),label=lbl,xlabel="Lambda",ylabel="Cout")
 end
 
-function intersection(d1,d2)
+function intersection(d1::Droite,d2::Droite)
 
-    cut = false
-    lambda = -1
+    cut::Bool = false
+    lambda::Float64 = -1
 
     if ((d1.c1 < d2.c1 && d1.c2 > d2.c2) || (d1.c1 > d2.c1 && d1.c2 < d2.c2)) 
         cut = true
 
-        nbLambda1 = d1.c2 - d1.c1
-        nbLambda2 = d2.c2 - d2.c1
-        cst1 = d1.c2
-        cst2 = d2.c2 
+        nbLambda1::Float64 = d1.c2 - d1.c1
+        nbLambda2::Float64 = d2.c2 - d2.c1
+        cst1::Float64 = d1.c2
+        cst2::Float64 = d2.c2 
 
         lambda = 1 + (cst2-cst1)/(nbLambda1 - nbLambda2)
-
+    
+    #Gestion des cas limites
+    elseif (d1.c1 == d2.c1 && d1.c2 != d2.c2)
+        cut = true
+        lambda = 0
+    elseif (d1.c2 == d2.c2 && d1.c1 != d2.c1)
+        cut = true
+        lambda = 1
     end
 
     return cut,lambda

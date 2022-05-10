@@ -1,35 +1,51 @@
 include("greedyInit.jl")
 
-function filter(I,J,y,c)
-    
-    
+mutable struct PointFiltrage
+    obj1::Float64
+    obj2::Float64
+    site::Int64
+    precedent
+end
+
+function filter(I::Int64,J::Int64,y::Vector{Int64},c::Vector{Vector{Vector{Float64}}})
+
+    echo = false
+    echo_etape = false
 
     #initialisation des points
-    points = []
-    for i = 1:I
-        row = []
-        for j = 1:J
-            if y[j] == 1
-                row = push!(row,(c[1][i][j] , c[2][i][j],j,nothing))
-            end
+
+    nb_site_ouvert = 0
+    for j = 1:J
+        if y[j] == 1
+            nb_site_ouvert += 1
         end
-        points = push!(points,row)
     end
 
-    # display(points)
-    
+
+    points::Vector{Vector{PointFiltrage}} = Vector{Vector{PointFiltrage}}(undef,I)
+
+    for i = 1:I
+        points[i] = Vector{PointFiltrage}(undef,nb_site_ouvert)
+        for j = 1:nb_site_ouvert
+            points[i][j] = PointFiltrage(c[1][i][j] , c[2][i][j] ,j,nothing)
+        end
+    end
+
+    if echo
+        display(points)
+    end
 
     override = false
     
     if override
         #override pour test
         points = [
-            [(6.45,3.099,1,nothing),(1.453,9.076,2,nothing),(3.224,4.306,3,nothing)],
-            [(10.8,1.701,1,nothing),(2.168,3.872,2,nothing),(3.404,9.501,3,nothing)],
-            [(9.088,3.718,1,nothing),(3.298,6.05,2,nothing),(4.858,6.983,3,nothing)],
-            [(4.347,3.416,1,nothing),(1.0,10.45,2,nothing),(2.809,2.185,3,nothing)],
-            [(4.895,7.632,1,nothing),(8.466,2.832,2,nothing),(9.948,3.809,3,nothing)],
-            [(10.4,2.656,1,nothing),(3.129,4.118,2,nothing),(4.384,8.893,3,nothing)]
+            [PointFiltrage(6.45,3.099,1,nothing),PointFiltrage(1.453,9.076,2,nothing),PointFiltrage(3.224,4.306,3,nothing)],
+            [PointFiltrage(10.8,1.701,1,nothing),PointFiltrage(2.168,3.872,2,nothing),PointFiltrage(3.404,9.501,3,nothing)],
+            [PointFiltrage(9.088,3.718,1,nothing),PointFiltrage(3.298,6.05,2,nothing),PointFiltrage(4.858,6.983,3,nothing)],
+            [PointFiltrage(4.347,3.416,1,nothing),PointFiltrage(1.0,10.45,2,nothing),PointFiltrage(2.809,2.185,3,nothing)],
+            [PointFiltrage(4.895,7.632,1,nothing),PointFiltrage(8.466,2.832,2,nothing),PointFiltrage(9.948,3.809,3,nothing)],
+            [PointFiltrage(10.4,2.656,1,nothing),PointFiltrage(3.129,4.118,2,nothing),PointFiltrage(4.384,8.893,3,nothing)]
         ]
         #display(points)
 
@@ -37,89 +53,142 @@ function filter(I,J,y,c)
         J=3
     end
 
-    to_filter = []
+    to_filter::Vector{Vector{PointFiltrage}} = Vector{Vector{PointFiltrage}}(undef,0)
 
     #Pré-traitement.
     for i = 1:I
-        to_filter = push!(to_filter,eff(points[i]))
+        push!(to_filter,eff(points[i]))
     end
- 
+
+    if echo
+        println("Après le pré-traiement :")
+        display(to_filter)
+        println("-----------------------------------------------------------------------")
+    end
     
-    filtered = deepcopy(to_filter[1])
-    # display(filtered)
-    # println("-----------------------------------------------------------------------")
+    filtered::Vector{PointFiltrage} = deepcopy(to_filter[1])
+
+
 
     #Filtrage linéaire.
     for i = 2:I
-        new_filtered = []
+        new_filtered::Vector{PointFiltrage} = Vector{PointFiltrage}(undef,0)
         for j = 1:length(to_filter[i])
-            a1,b1,s1 = to_filter[i][j]
+            point1 = to_filter[i][j]
             for k = 1:length(filtered)
-                a2,b2,s2 = filtered[k]
-                new_filtered = push!(new_filtered,(a1+a2,b1+b2,s1,filtered[k]))
+                point2 = filtered[k]
+                push!(new_filtered,PointFiltrage(point1.obj1+point2.obj1,point1.obj2+point2.obj2,point1.site,filtered[k]))
             end
         end
 
         filtered = eff(new_filtered)
-        # display(filtered)
-        # println("-----------------------------------------------------------------------")
+        if echo
+            println("Après un filtrage : ")
+            display(filtered)
+            println("-----------------------------------------------------------------------")
+        end
+        if echo_etape
+            println("client ",i,", nbPoints : ",length(filtered))
+        end
     end
+
     
+    # print(typeof(filtered))
+    # for p = filtered[1:10]
+    #     println("(",p.obj1,", ",p.obj2,")")
+    # end
+
     return filtered
 
 end
 
-function affectationClient(I,J,y,c)
-    return backtracking(filter(I,J,y,c))
+function affectationClient(I::Int64,J::Int64,y::Vector{Int64},c::Vector{Vector{Vector{Float64}}})
+
+    points::Vector{PointFiltrage} = filter(I,J,y,c)
+    return backtracking(points)
+
 end
 
+function AffectationClient_totale(I::Int64,J::Int64,liste_y::Vector{Vector{Int64}},c::Vector{Vector{Vector{Float64}}},f::Vector{Vector{Float64}})
 
+    points::Vector{PointFiltrage} = Vector{PointFiltrage}(undef,0)
+    liste_x::Vector{Vector{Int64}} = Vector{Vector{Vector{Int64}}}(undef,0)
+    
+    for y = liste_y
+        push!(liste_x,backtracking(filter(I,J,y,c)))
+    end
 
-function eff(d)
-    res = []
+    
+    return backtracking(points)
+
+end
+
+function eff(d::Vector{PointFiltrage})
+    res::Vector{PointFiltrage} = Vector{PointFiltrage}(undef,0)
     for i = 1:length(d)
         nonDominated = true
-        a1,b1,s1,p1 = d[i]
+        point1 = d[i]
         for j = 1:length(d)
             if i!=j 
-                a2,b2,s2,p2 = d[j]
-                if ((a2<=a1) && (b2<b1))||((a2<a1) && (b2<=b1))
+                point2 = d[j]
+                if ((point2.obj1<=point1.obj1) && (point2.obj2<point1.obj2))||
+                    ((point2.obj1<point1.obj1) && (point2.obj2<=point1.obj2))
                     nonDominated = false
                 end
             end
         end
 
         if nonDominated
-            res = push!(res,d[i])
+            push!(res,d[i])
         end
     end
     return res
 end
 
+
 function display(d)
 
-    for i = 1:length(d)
-        for j = 1:length(d[i])
-            print(d[i][j],"   ")
-        end
-        print("\n\n")
+    if typeof(d) == Vector{PointFiltrage}
+        to_disp = [d]
+    else
+        to_disp = d
     end
+
+    for i = 1:length(to_disp)
+            for j = 1:length(to_disp[i])
+                current = to_disp[i][j]
+                parenthese = 0
+                print("(",current.obj1,", ",current.obj2,", ",current.site)
+                while current.precedent !== nothing
+                    print("(",current.obj1,", ",current.obj2,", ",current.site)
+                    current = current.precedent
+                    parenthese += 1
+                end
+                
+                for i = 1:parenthese
+                    print(")")
+                end
+                print(", nothing) ")
+            end
+        print("\n")
+    end
+    print("\n")
 end
 
-function backtracking(filtered)
+function backtracking(filtered::Vector{PointFiltrage})
     resultat::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,0)
     #pour chaque point
-    
+
     for i = 1:length(filtered)
         solution::Vector{Int64} = Vector{Int64}(undef,0)
         current = filtered[i]
-        a,b,s,p = current
-        while (p !== nothing)
-            push!(solution,s)
-            current = p
-            a,b,s,p = current
+        point = current
+        while (current.precedent !== nothing)
+            push!(solution,current.site)
+            current = current.precedent
+            point = current
         end
-        push!(solution,s)
+        push!(solution,point.site)
 
         push!(resultat,solution)
     end
