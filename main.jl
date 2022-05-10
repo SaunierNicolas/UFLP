@@ -21,18 +21,48 @@ Donnee :
 
 function main()
 
+    #Décommenter pour charger des données didactiques
     #I,J,f,c,x_init,y_init = donnees_didactique()
 
-    #plot_greedyInit_echantillonnage(10,i,j,f,c)
+    #nom du ficher de l'instance a charger
+    nomInstance = "F52-54.txt"
 
-    #plot_greedyInit_echantillonnage(10,i,j,f,c)
+    I::Int64,J::Int64,c::Vector{Vector{Vector{Float64}}},f::Vector{Vector{Float64}} = parser(nomInstance)
 
-    I::Int64,J::Int64,c::Vector{Vector{Vector{Float64}}},f::Vector{Vector{Float64}} = parser("F50-54.txt")
-    #Une solution est une liste de site ouvert, et une affectation des clients à ces sites.
-    #solutions::Vector{Tuple{Vector{Int64},Vector{Int64}}} = Vector{Tuple{Vector{Int64},Vector{Int64}}}(undef,0)
+    #Vrai si l'on souhaite plus d'information
 
-    t_inter = @elapsed ouvertures_sites::Vector{Vector{Int64}} = greedyInit_inter01(I,J,f,c)
-    #ouvertures_sites::Vector{Vector{Int64}} = echantillonnage(I,J,f,c,100)
+    #Vrai si l'on souhaite une ouverture des sites par decoupage d'decoupageIntervalle
+    #Faux si l'on souhaite une ouverture des sites par echantillonnage
+    decoupageIntervalle = true
+
+    #Si l'ouverture des sites se fait avec l'echantillonnage, il faut indiquer une precision.
+    precision = 1000
+
+    println("Instance ",nomInstance)
+
+    if (decoupageIntervalle)
+        println("Ouverture des sites par decoupage d'intervalle")
+    else
+        println("Ouverture des sites par echantillonnage, avec une precision de ",precision)
+    end
+    
+    execution(I,J,c,f,decoupageIntervalle,precision)
+    
+
+end
+
+function execution(I,J,c,f,ouvertureInter,precision)
+
+
+    ouvertures_sites::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,0)
+
+    t_ouverture = 0.0
+
+    if ouvertureInter
+        t_ouverture = @elapsed ouvertures_sites = greedyInit_inter01(I,J,f,c)
+    else
+        t_ouverture = @elapsed ouvertures_sites = echantillonnage(I,J,f,c,precision)
+    end
 
     affectations_clients::Vector{Vector{Int64}} = Vector{Vector{Int64}}(undef,0)
 
@@ -43,12 +73,9 @@ function main()
     total_points_c1::Vector{Float64} = Vector{Float64}(undef,0)
     total_points_c2::Vector{Float64} = Vector{Float64}(undef,0)
 
-    #y = ouvertures_sites[1]
-    #ouvertures_sites = [[1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1]]
-    #println(y)
-    println("ouvertures terminée : ",length(ouvertures_sites), "(",t_inter,"s)")
+    println("ouvertures terminée : ",length(ouvertures_sites) , " services ouverts (",t_ouverture," s)")
 
-    println("calcul de l'affectation :")
+    println("calcul des affectations :")
     t_filtrage = Vector{Float64}(undef,length(ouvertures_sites))
     for k = 1:length(ouvertures_sites)
         print(k,"/",length(ouvertures_sites))
@@ -75,21 +102,18 @@ function main()
 
     total_points_c1,total_points_c2 = VectCouple_to_vect(total_points)
 
-
-    # println("échantillonage : ")
-    # ouvertures_sites_enchantillonage = echantillonnage(I,J,f,c,100)
-    # for o = ouvertures_sites_enchantillonage
-    #     println(o)
-    # end
     sum = 0.0
     for k = t_filtrage
         sum += k
     end
-    println("temps filtrage : ",sum,"s")
-    println("temps filtrage moyen  : ",sum/length(t_filtrage),"s")
+    println("temps filtrage total : ",sum," s")
+    println("temps filtrage moyen  : ",sum/length(t_filtrage)," s")
+
+    println("nombre de point non-dominés : ",length(total_points))
 
     #scatter(groupe_points_c1,groupe_points_c2,label=false)
-    scatter(total_points_c1,total_points_c2,label=false)
+    scatter(total_points_c1,total_points_c2,label=false,title="Solutions non-dominées",xlabel="cout 1",ylabel="cout 2")
+
 
 end
 
